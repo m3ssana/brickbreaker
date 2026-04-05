@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BRICK ROASTER 3D</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; background: #000008; overflow: hidden; }
+
+    #canvas-container {
+      position: absolute;
+      inset: 0;
+    }
+    #canvas-container canvas { display: block; }
+
+    #hud {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      font-family: 'Courier New', Courier, monospace;
+      font-weight: bold;
+      user-select: none;
+    }
+
+    #overlay {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 12, 0.88);
+      font-family: 'Courier New', Courier, monospace;
+      text-align: center;
+      pointer-events: auto;
+    }
+    #overlay.visible { display: flex; }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    @keyframes pulse {
+      0%, 100% { text-shadow: 0 0 10px currentColor; }
+      50% { text-shadow: 0 0 30px currentColor, 0 0 60px currentColor; }
+    }
+  </style>
+  <script type="module" crossorigin src="/assets/index-DvDLSzAY.js"></script>
+</head>
+<body>
+  <div id="canvas-container"></div>
+  <div id="hud"></div>
+  <div id="overlay"></div>
+</body>
+</html>
