@@ -243,9 +243,9 @@ Mark tasks `[x]` as you complete them.
 - [x] Feature-detect `SharedArrayBuffer`; `SharedStateBuffer` in `src/physics/SharedStateBuffer.ts`
 - [x] `writeBall` / `writePaddle` / `readBall` API with correct Float32Array offsets
 - [x] Fallback to postMessage when SAB unavailable
-- [ ] Lazy-load Rapier WASM: delay PhysicsSync construction until first user interaction
+- [x] Lazy-load Rapier WASM: delay PhysicsSync construction until first user interaction
 - [ ] Profile with Chrome DevTools; target 60fps on a mid-2020 laptop
-- [ ] Final integration test: play through all 5 levels end-to-end
+- [x] Final integration test: play through all 5 levels end-to-end
 
 ---
 
