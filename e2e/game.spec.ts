@@ -69,6 +69,7 @@ test('HUD shows initial lives', async ({ page }) => {
 
 test('HUD shows score of 000000 at start', async ({ page }) => {
   await page.goto('/')
+  await page.click('body')
   await expect(page.locator('#overlay')).toContainText('PRESS ENTER TO SUFFER', { timeout: 10_000 })
   await page.keyboard.press('Enter')
   await expect(page.locator('#hud-score')).toContainText('000000', { timeout: 3_000 })
@@ -78,6 +79,7 @@ test('HUD shows score of 000000 at start', async ({ page }) => {
 
 test('ball launches on Space and score eventually increments', async ({ page }) => {
   await page.goto('/')
+  await page.click('body')
   await expect(page.locator('#overlay')).toContainText('PRESS ENTER TO SUFFER', { timeout: 10_000 })
   await page.keyboard.press('Enter')
   // Wait for "SPACE to launch" hint
@@ -91,6 +93,7 @@ test('ball launches on Space and score eventually increments', async ({ page }) 
 
 test('Escape key opens pause overlay', async ({ page }) => {
   await page.goto('/')
+  await page.click('body')
   await expect(page.locator('#overlay')).toContainText('PRESS ENTER TO SUFFER', { timeout: 10_000 })
   await page.keyboard.press('Enter')
   await page.keyboard.press('Escape')
@@ -100,6 +103,7 @@ test('Escape key opens pause overlay', async ({ page }) => {
 
 test('Escape key resumes from pause', async ({ page }) => {
   await page.goto('/')
+  await page.click('body')
   await expect(page.locator('#overlay')).toContainText('PRESS ENTER TO SUFFER', { timeout: 10_000 })
   await page.keyboard.press('Enter')
   await page.keyboard.press('Escape') // pause
@@ -111,6 +115,7 @@ test('Escape key resumes from pause', async ({ page }) => {
 
 test('game over screen shows after losing all lives', async ({ page }) => {
   await page.goto('/')
+  await page.click('body')
   await expect(page.locator('#overlay')).toContainText('PRESS ENTER TO SUFFER', { timeout: 10_000 })
   await page.keyboard.press('Enter')
   // Wait until physics ball exists (SPACE to launch hint)
@@ -132,6 +137,7 @@ test('game over screen shows after losing all lives', async ({ page }) => {
 
 test('Enter key from game over returns to menu', async ({ page }) => {
   await page.goto('/')
+  await page.click('body')
   await expect(page.locator('#overlay')).toContainText('PRESS ENTER TO SUFFER', { timeout: 10_000 })
   await page.keyboard.press('Enter')
   // Navigate to game over state via keyboard (best effort in E2E)
