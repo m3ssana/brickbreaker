@@ -17,9 +17,15 @@ export class PhysicsSync {
   }
 
   init(arena: ArenaConfig): Promise<void> {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       const onReady = (e: MessageEvent) => {
-        if ((e.data as {type:string}).type !== 'ready') return
+        const msg = e.data as { type: string; message?: string }
+        if (msg.type === 'error') {
+          this._worker.removeEventListener('message', onReady)
+          reject(new Error(`PhysicsWorker: ${msg.message}`))
+          return
+        }
+        if (msg.type !== 'ready') return
         this._worker.removeEventListener('message', onReady)
         this._ready = true
         // Share SAB with worker when available
@@ -31,6 +37,10 @@ export class PhysicsSync {
         resolve()
       }
       this._worker.addEventListener('message', onReady)
+      // Also catch low-level worker errors (syntax errors, failed imports, etc.)
+      this._worker.onerror = (ev) => {
+        reject(new Error(`PhysicsWorker onerror: ${ev.message}`))
+      }
     })
   }
 

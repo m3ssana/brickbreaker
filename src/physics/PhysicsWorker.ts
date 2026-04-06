@@ -237,7 +237,12 @@ function step(dt: number, newPaddleX: number) {
 // ── Entry ─────────────────────────────────────────────────────────────────────
 
 async function main() {
-  await RAPIER.init()
+  try {
+    await RAPIER.init()
+  } catch (err) {
+    ctx.postMessage({ type: 'error', message: String(err) })
+    return
+  }
   ctx.postMessage({ type: 'ready' })
   ctx.addEventListener('message', (e: MessageEvent) => {
     const msg = e.data as { type: string }

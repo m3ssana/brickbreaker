@@ -177,6 +177,17 @@ export class Game {
       this._physicsReady = true
       // If still on the menu, refresh it to change "Loading..." to "Press ENTER"
       if (this._state === 'menu') this._showMenu()
+    }).catch((err: unknown) => {
+      console.error('[physics]', err)
+      // Show the error in the menu so the player knows what went wrong
+      if (this._overlay) {
+        this._overlay.innerHTML = `
+          <div style="color:#ff2244;font-size:22px;letter-spacing:2px;margin-bottom:16px;">PHYSICS ENGINE FAILED</div>
+          <div style="color:#667788;font-size:14px;max-width:480px;line-height:1.8;">${String(err)}</div>
+          <div style="color:#445566;font-size:12px;margin-top:20px;">Try a different browser or check the console for details.</div>
+        `
+        this._overlay.classList.add('visible')
+      }
     })
   }
 
@@ -712,10 +723,13 @@ export class Game {
     `
     // Allow clicking/tapping anywhere on the overlay to start — but NOT on the
     // menu buttons (level-select, shame, settings) which stop propagation.
+    // _initPhysics() MUST be called here (not just in document.click) because
+    // element onclick fires before the bubbled document.click handler, so
+    // _physics would still be null when _startGame → _loadLevel → loadBricks runs.
     this._overlay.onclick = (e) => {
       const t = e.target as HTMLElement
       if (!t.closest('#level-select-btn, #shame-btn, #settings-btn')) {
-        this._audio.menuSelect(); this._startGame()
+        this._initPhysics(); this._audio.menuSelect(); this._startGame()
       }
     }
     document.getElementById('level-select-btn')?.addEventListener('click', (e) => { e.stopPropagation(); this._showLevelSelectOverlay() })
