@@ -150,10 +150,15 @@ export class Game {
     this._initHUD()
     this._overlay = document.getElementById('overlay')!
 
-    document.addEventListener('keydown', e => { this._keys.add(e.key); this._handleKey(e.key); this._initPhysics() })
+    // _initPhysics MUST come before _handleKey so that this._physics is non-null
+    // when _startGame → _loadLevel → loadBricks() is called on the first keypress.
+    document.addEventListener('keydown', e => { this._keys.add(e.key); this._initPhysics(); this._handleKey(e.key) })
     document.addEventListener('keyup',   e => this._keys.delete(e.key))
-    document.addEventListener('click',   () => this._initPhysics(), { once: true })
-    document.addEventListener('touchstart', () => this._initPhysics(), { once: true, passive: true })
+    // Click / tap initialise physics. Game start from clicks is handled by the
+    // overlay's own onclick set in _showMenu, so we don't accidentally trigger
+    // _startGame when the user clicks a menu button (settings, shame, etc.).
+    document.addEventListener('click',      () => this._initPhysics())
+    document.addEventListener('touchstart', () => this._initPhysics(), { passive: true })
 
     // Init systems
     this._save.init()
@@ -511,6 +516,7 @@ export class Game {
   }
 
   private _startGame() {
+    this._overlay.onclick = null  // prevent re-entry from overlay click handler
     this._lives = 3; this._score = 0; this._combo = 0
     this._won = false; this._ballsLostLevel = 0
     this._roastEngine.reset()
@@ -690,7 +696,7 @@ export class Game {
   private _showMenu() {
     this._overlay.classList.add('visible'); this._overlay.style.opacity = ''
     const readyLine = this._physicsReady
-      ? `<div style="color:#00ffff;font-size:20px;letter-spacing:2px;animation:blink 1s step-end infinite;">[ PRESS ENTER TO SUFFER ]</div>`
+      ? `<div style="color:#00ffff;font-size:20px;letter-spacing:2px;animation:blink 1s step-end infinite;">[ PRESS ENTER or TAP TO SUFFER ]</div>`
       : `<div style="color:#445566;font-size:16px;letter-spacing:2px;animation:blink 0.5s step-end infinite;">initializing physics engine...</div>`
     this._overlay.innerHTML = `
       <div style="color:#00ffff;font-size:52px;letter-spacing:4px;text-shadow:0 0 20px #00ffff,0 0 60px #00ffff;animation:pulse 2s ease-in-out infinite;margin-bottom:10px;">BRICK ROASTER 3D</div>
@@ -704,9 +710,17 @@ export class Game {
         <div id="settings-btn" style="color:#334455;font-size:13px;cursor:pointer;text-decoration:underline;">[settings]</div>
       </div>
     `
-    document.getElementById('level-select-btn')?.addEventListener('click', () => this._showLevelSelectOverlay())
-    document.getElementById('shame-btn')?.addEventListener('click', () => this._showWallOfShame())
-    document.getElementById('settings-btn')?.addEventListener('click', () => this._openSettings())
+    // Allow clicking/tapping anywhere on the overlay to start — but NOT on the
+    // menu buttons (level-select, shame, settings) which stop propagation.
+    this._overlay.onclick = (e) => {
+      const t = e.target as HTMLElement
+      if (!t.closest('#level-select-btn, #shame-btn, #settings-btn')) {
+        this._audio.menuSelect(); this._startGame()
+      }
+    }
+    document.getElementById('level-select-btn')?.addEventListener('click', (e) => { e.stopPropagation(); this._showLevelSelectOverlay() })
+    document.getElementById('shame-btn')?.addEventListener('click',        (e) => { e.stopPropagation(); this._showWallOfShame() })
+    document.getElementById('settings-btn')?.addEventListener('click',     (e) => { e.stopPropagation(); this._openSettings() })
   }
 
   private _showPause() {
