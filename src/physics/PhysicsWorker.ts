@@ -1,4 +1,7 @@
 import * as RAPIER from '@dimforge/rapier3d-compat'
+// Vite replaces import.meta.url with "<deleted>" inside bundled workers, breaking
+// Rapier's default WASM path resolution. We ship the WASM to public/ so it is
+// always available at the root of the domain regardless of the worker bundle path.
 import type { ArenaConfig, BrickDef, FragmentState, PhysicsState } from './types'
 import { SAB_LAYOUT } from './SharedStateBuffer'
 
@@ -238,7 +241,10 @@ function step(dt: number, newPaddleX: number) {
 
 async function main() {
   try {
-    await RAPIER.init()
+    // Pass the WASM URL explicitly — Rapier's fallback uses import.meta.url which
+    // Vite replaces with "<deleted>" inside bundled workers, causing a payload error.
+    // The file is served from public/ so it is always at /rapier_wasm3d_bg.wasm.
+    await (RAPIER.init as (url?: unknown) => Promise<void>)('/rapier_wasm3d_bg.wasm')
   } catch (err) {
     ctx.postMessage({ type: 'error', message: String(err) })
     return
