@@ -16,4 +16,12 @@ export default defineConfig({
       'Cross-Origin-Embedder-Policy': 'require-corp',
     },
   },
+  // Apply the same headers to `npm run preview` so SharedArrayBuffer is
+  // available locally and the coi-serviceworker code path is never hit.
+  preview: {
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+    },
+  },
 })

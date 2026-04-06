@@ -7,8 +7,9 @@
   <script>
     // On GitHub Pages, COOP/COEP headers can't be set server-side.
     // Register a service worker that re-injects them so SharedArrayBuffer works.
-    // In dev, Vite already sets the headers so SharedArrayBuffer is defined — skip.
-    if (typeof SharedArrayBuffer === 'undefined') {
+    // In dev/preview, Vite sets the headers directly so SharedArrayBuffer is
+    // already defined — the block below is skipped entirely in those contexts.
+    if (typeof SharedArrayBuffer === 'undefined' && 'serviceWorker' in navigator) {
       navigator.serviceWorker.register('./coi-serviceworker.js').then(() => {
         location.reload();
       });
