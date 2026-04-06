@@ -11,6 +11,7 @@ vi.mock('three', () => {
   }
   class BoxGeometry { constructor(..._args: unknown[]) {} }
   class MeshStandardMaterial { constructor(_opts?: unknown) {} }
+  class MeshBasicMaterial { constructor(_opts?: unknown) {} }
 
   class Object3D {
     position = { set: vi.fn() }
@@ -49,7 +50,7 @@ vi.mock('three', () => {
     remove = vi.fn()
   }
 
-  return { Color, BoxGeometry, MeshStandardMaterial, Object3D, InstancedMesh, Mesh, Scene }
+  return { Color, BoxGeometry, MeshStandardMaterial, MeshBasicMaterial, Object3D, InstancedMesh, Mesh, Scene }
 })
 // ────────────────────────────────────────────────────────────────────────────
 
