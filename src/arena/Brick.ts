@@ -33,7 +33,8 @@ export class BrickFormation {
   constructor(scene: THREE.Scene) {
     this._scene = scene
     const geo = new THREE.BoxGeometry(BRICK.WIDTH, BRICK.HEIGHT, BRICK.DEPTH)
-    const mat = new THREE.MeshStandardMaterial({ metalness: 0.3, roughness: 0.5 })
+    // MeshBasicMaterial for diagnostic — eliminates lighting as a variable
+    const mat = new THREE.MeshBasicMaterial({ vertexColors: true })
     this._mesh = new THREE.InstancedMesh(geo, mat, MAX_INSTANCES)
     this._mesh.castShadow = true; this._mesh.receiveShadow = true
     this._mesh.frustumCulled = false
@@ -93,6 +94,10 @@ export class BrickFormation {
   }
 
   get activeCount() { return this._activeCount }
+  get firstBrickPos(): string {
+    const b = this._bricks[0]
+    return b ? `(${b.x.toFixed(1)},${b.y.toFixed(1)},${b.z.toFixed(1)})` : 'none'
+  }
 
   getBrickById(id: number): BrickState | undefined {
     const idx = this._brickById.get(id)
