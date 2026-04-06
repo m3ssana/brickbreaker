@@ -698,7 +698,8 @@ export class Game {
     this._hudLives.className = this._lives === 1 ? 'lives-danger' : ''
     if (this._level) {
       const suffix = (!this._ball.isLaunched() && !this._physicsReady) ? ' · loading...' : (!this._ball.isLaunched() ? ' · SPACE to launch' : '')
-      this._hudLevel.textContent = `LEVEL ${this._levelIndex+1} · ${this._level.def.world.toUpperCase()}${suffix}`
+      const dbg = `[bricks:${this._bricks.activeCount} physReady:${this._physicsReady}]`
+      this._hudLevel.textContent = `LEVEL ${this._levelIndex+1} · ${this._level.def.world.toUpperCase()}${suffix} ${dbg}`
     }
   }
 
