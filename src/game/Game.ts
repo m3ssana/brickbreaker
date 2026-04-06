@@ -251,7 +251,8 @@ export class Game {
       }
       if (this._state === 'playing') {
         const { collected, missed } = this._powerups.update(dt, this._paddle.x, PADDLE.Z)
-        for (const type of collected) this._onPowerupCollected(type)
+        for (const type of collected) { this._onPowerupCollected(type); this._roastEngine.recordPowerupCollected() }
+        for (const _type of missed) this._roastEngine.recordPowerupMissed()
         if (missed.length > 0) this._roastEngine.onBrickHit(this._combo)
         const expired = this._powerups.tickEffects(dt)
         for (const type of expired) this._onEffectExpired(type)

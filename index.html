@@ -4,6 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BRICK ROASTER 3D</title>
+  <script>
+    // On GitHub Pages, COOP/COEP headers can't be set server-side.
+    // Register a service worker that re-injects them so SharedArrayBuffer works.
+    // In dev, Vite already sets the headers so SharedArrayBuffer is defined — skip.
+    if (typeof SharedArrayBuffer === 'undefined') {
+      navigator.serviceWorker.register('./coi-serviceworker.js').then(() => {
+        location.reload();
+      });
+    }
+  </script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { width: 100%; height: 100%; background: #000008; overflow: hidden; }

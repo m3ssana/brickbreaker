@@ -108,7 +108,7 @@ Mark tasks `[x]` as you complete them.
 - [x] Paddle flailing detection: track stddev of paddle movement over last 3s; high variance = flailing
 - [x] Camping detection: paddle hasn't moved more than 1 unit in 5s while ball is in play
 - [x] Death-to-progress ratio: balls lost divided by bricks cleared; feeds tier weighting
-- [ ] Powerup efficiency tracking: powerup dropped vs collected (once powerups are implemented)
+- [x] Powerup efficiency tracking: powerup dropped vs collected (once powerups are implemented)
 - [x] Roast frequency multiplier already in engine — wire up to Heckler power-down when implemented
 
 ## Chunk 12: Roast Library ✅
@@ -173,7 +173,7 @@ Mark tasks `[x]` as you complete them.
 
 ## Chunk 20-21: Powerups & Power-Downs ✅
 - [x] Powerup base: spinning 3D pickup mesh, drops on brick destroy (~20% chance), falls toward paddle, missed = gone
-- [ ] Roast engine tracks powerup collection efficiency (grabbed vs missed)
+- [x] Roast engine tracks powerup collection efficiency (grabbed vs missed)
 - [x] **Powerups**: Multi-Ball (×3 split), Mega Ball (plow through), Wide Paddle (1.5×), Laser Paddle (10 shots), Slow-Mo (5s), Shield (1-use wall)
 - [x] **Power-Downs**: Reverse (invert axes 10s), Drunk Mode (paddle momentum 8s), Tiny Paddle (0.4× for 8s), Heckler (2× roast frequency 30s)
 - [x] **Fog of War**: fill arena with volumetric fog (THREE.Fog density spike), barely see ball — 15s duration

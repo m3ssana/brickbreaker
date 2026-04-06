@@ -123,3 +123,78 @@ describe('PowerupManager — clear', () => {
     expect(pm.isActive('slow_mo')).toBe(false)
   })
 })
+
+describe('PowerupManager — efficiency tracking', () => {
+  it('starts with zero collected and dropped counts', () => {
+    const pm = new PowerupManager(makeScene())
+    expect(pm.collectedCount).toBe(0)
+    expect(pm.droppedCount).toBe(0)
+  })
+
+  it('collectedCount increments when paddle collects a pickup', () => {
+    const pm = new PowerupManager(makeScene())
+    pm.trySpawn(0, 5, -10, 1.0) // force spawn at x=0, z=-10
+    // Move pickup right onto the paddle with a tiny dt
+    // The pickup starts at z=-10; paddle is at z=3 (paddleZ arg)
+    // Use large dt so it falls past paddle position AND is within collect radius
+    // Spawn at x=0; paddle at x=0 (same), paddleZ=3: after large dt pickup.z = -10 + 4*dt
+    // We need pickup.z to be within COLLECT_RADIUS of paddleZ (3)
+    // At dt=3: z = -10 + 12 = 2; dist to paddleZ=3 is 1 < 3.5 → collected
+    const result = pm.update(3, 0, 3)
+    expect(result.collected.length).toBe(1)
+    expect(pm.collectedCount).toBe(1)
+    expect(pm.droppedCount).toBe(0)
+  })
+
+  it('droppedCount increments when pickup falls past the paddle', () => {
+    const pm = new PowerupManager(makeScene())
+    pm.trySpawn(0, 5, -10, 1.0) // spawn at x=0, z=-10
+    // Paddle far to side so pickup misses; use large dt so z > paddleZ + 5
+    // At dt=100: z = -10 + 400 = 390; paddle at x=99 (far away) → missed
+    const result = pm.update(100, 99, 3)
+    expect(result.missed.length).toBe(1)
+    expect(pm.droppedCount).toBe(1)
+    expect(pm.collectedCount).toBe(0)
+  })
+
+  it('efficiency is 1.0 when all pickups are collected', () => {
+    const pm = new PowerupManager(makeScene())
+    pm.trySpawn(0, 5, -10, 1.0)
+    pm.update(3, 0, 3) // collect it
+    expect(pm.efficiency).toBeCloseTo(1.0)
+  })
+
+  it('efficiency is 0.0 when all pickups are missed', () => {
+    const pm = new PowerupManager(makeScene())
+    pm.trySpawn(0, 5, -10, 1.0)
+    pm.update(100, 99, 3) // miss it
+    expect(pm.efficiency).toBeCloseTo(0.0)
+  })
+
+  it('efficiency is 0.5 when half collected half missed', () => {
+    const pm = new PowerupManager(makeScene())
+    // Collect one
+    pm.trySpawn(0, 5, -10, 1.0)
+    pm.update(3, 0, 3)
+    // Miss one
+    pm.trySpawn(0, 5, -10, 1.0)
+    pm.update(100, 99, 3)
+    expect(pm.efficiency).toBeCloseTo(0.5)
+  })
+
+  it('efficiency returns 1.0 (neutral) when no pickups have appeared yet', () => {
+    const pm = new PowerupManager(makeScene())
+    expect(pm.efficiency).toBeCloseTo(1.0)
+  })
+
+  it('clear resets efficiency counts', () => {
+    const pm = new PowerupManager(makeScene())
+    pm.trySpawn(0, 5, -10, 1.0)
+    pm.update(100, 99, 3) // miss it
+    expect(pm.droppedCount).toBe(1)
+    pm.clear()
+    expect(pm.droppedCount).toBe(0)
+    expect(pm.collectedCount).toBe(0)
+    expect(pm.efficiency).toBeCloseTo(1.0)
+  })
+})

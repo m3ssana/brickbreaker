@@ -351,3 +351,68 @@ describe('RoastEngine — troll brick event', () => {
     expect(text.length).toBeGreaterThan(0)
   })
 })
+
+describe('RoastEngine — powerup efficiency tracking', () => {
+  it('recordPowerupCollected and recordPowerupMissed methods exist', () => {
+    const { engine } = makeEngine()
+    expect(typeof engine.recordPowerupCollected).toBe('function')
+    expect(typeof engine.recordPowerupMissed).toBe('function')
+  })
+
+  it('low powerup efficiency (all missed) nudges tier upward', () => {
+    // Engine A: no powerup events → baseline tier
+    const engA = new RoastEngine(); engA.reset()
+    for (let i = 0; i < 5; i++) engA.recordPowerupMissed()
+    engA.tick(7, 0) // trigger tier update
+    const hA = vi.fn(); engA.onRoast = hA
+    engA.tick(20, 0)
+    const tierA = Math.max(...hA.mock.calls.map(c => c[1] as number), 0)
+
+    // Engine B: all powerups collected → should have same or lower tier
+    const engB = new RoastEngine(); engB.reset()
+    for (let i = 0; i < 5; i++) engB.recordPowerupCollected()
+    engB.tick(7, 0)
+    const hB = vi.fn(); engB.onRoast = hB
+    engB.tick(20, 0)
+    const tierB = Math.max(...hB.mock.calls.map(c => c[1] as number), 0)
+
+    // Missing all powerups should produce higher or equal tier vs collecting all
+    expect(tierA).toBeGreaterThanOrEqual(tierB)
+  })
+
+  it('perfect efficiency (all collected) does not raise tier above baseline', () => {
+    const { engine } = makeEngine()
+    for (let i = 0; i < 10; i++) engine.recordPowerupCollected()
+    engine.tick(7, 0)
+    const handler = vi.fn(); engine.onRoast = handler
+    engine.tick(20, 0)
+    const tiers = handler.mock.calls.map(c => c[1] as number)
+    // With 0 balls lost and 10 collected powerups, tier should stay low (0 or 1)
+    expect(Math.max(...tiers, 0)).toBeLessThanOrEqual(2)
+  })
+
+  it('efficiency penalty only applies when meaningful number of powerups have appeared', () => {
+    // With very few events (< 3), tier should not be heavily penalized
+    const { engine } = makeEngine()
+    engine.recordPowerupMissed() // only 1 missed, not enough to raise tier significantly
+    engine.tick(7, 0)
+    const handler = vi.fn(); engine.onRoast = handler
+    engine.tick(20, 0)
+    const tiers = handler.mock.calls.map(c => c[1] as number)
+    // Should remain at tier 0 or 1 with just 1 missed powerup and otherwise clean record
+    expect(Math.max(...tiers, 0)).toBeLessThanOrEqual(1)
+  })
+
+  it('reset clears powerup efficiency counters', () => {
+    const { engine } = makeEngine()
+    for (let i = 0; i < 5; i++) engine.recordPowerupMissed()
+    engine.reset()
+    // After reset the efficiency state is cleared; fire a tier update
+    engine.tick(7, 0)
+    const handler = vi.fn(); engine.onRoast = handler
+    engine.tick(20, 0)
+    const tiers = handler.mock.calls.map(c => c[1] as number)
+    // Reset should clear the missed count so tier stays low
+    expect(Math.max(...tiers, 0)).toBeLessThanOrEqual(1)
+  })
+})

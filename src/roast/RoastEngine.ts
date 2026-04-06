@@ -18,6 +18,10 @@ export class RoastEngine {
   private _score          = 0
   private _ballLaunched   = false
 
+  // Powerup efficiency tracking
+  private _powerupsCollected = 0
+  private _powerupsMissed    = 0
+
   // Flailing detection — ring buffer of last 30 paddleX positions
   private _posHistory: number[] = []
   private _flailWarned    = false
@@ -42,11 +46,18 @@ export class RoastEngine {
     this._idleWarned = false; this._flailWarned = false; this._campWarned = false
     this._campTimer = 0; this._posHistory = []; this._ballLaunched = false
     this._currentTier = 0; this._roastCooldown = 2
+    this._powerupsCollected = 0; this._powerupsMissed = 0
   }
 
   // ── External state setters ─────────────────────────────────────────────────
 
   setBallLaunched(v: boolean) { this._ballLaunched = v; if (!v) { this._campTimer = 0; this._campWarned = false } }
+
+  /** Record a powerup successfully collected by the player. */
+  recordPowerupCollected() { this._powerupsCollected++ }
+
+  /** Record a powerup that fell past the paddle (missed). */
+  recordPowerupMissed() { this._powerupsMissed++ }
 
   // ── Game event hooks ──────────────────────────────────────────────────────
 
@@ -152,6 +163,13 @@ export class RoastEngine {
       if (ratio > 0.15) score++
     } else if (this._ballsLost > 0) {
       score++ // died without clearing anything
+    }
+
+    // Powerup efficiency penalty: missing most powerups nudges tier up
+    const totalPowerups = this._powerupsCollected + this._powerupsMissed
+    if (totalPowerups >= 3) {
+      const efficiency = this._powerupsCollected / totalPowerups
+      if (efficiency < 0.5) score++
     }
 
     this._currentTier = Math.max(0, Math.min(4, score))

@@ -60,8 +60,26 @@ export class PowerupManager {
   private _pickups: Pickup[] = []
   private _effects: ActiveEffect[] = []
 
+  private _collectedCount = 0
+  private _droppedCount   = 0
+
   constructor(scene: THREE.Scene) {
     this._scene = scene
+  }
+
+  /** Number of powerups collected by the player this level. */
+  get collectedCount(): number { return this._collectedCount }
+
+  /** Number of powerups that fell past the paddle (missed) this level. */
+  get droppedCount(): number { return this._droppedCount }
+
+  /**
+   * Ratio of collected / total spawned-and-resolved pickups.
+   * Returns 1.0 when no pickups have appeared yet (neutral baseline).
+   */
+  get efficiency(): number {
+    const total = this._collectedCount + this._droppedCount
+    return total === 0 ? 1.0 : this._collectedCount / total
   }
 
   /**
@@ -97,9 +115,11 @@ export class PowerupManager {
 
       if (dist2 < COLLECT_RADIUS * COLLECT_RADIUS) {
         collected.push(p.type)
+        this._collectedCount++
         this._removePickup(i)
       } else if (p.z > paddleZ + 5) {
         missed.push(p.type)
+        this._droppedCount++
         this._removePickup(i)
       }
     }
@@ -151,6 +171,8 @@ export class PowerupManager {
     for (const p of this._pickups) this._scene.remove(p.mesh)
     this._pickups = []
     this._effects = []
+    this._collectedCount = 0
+    this._droppedCount   = 0
   }
 
   // ── Private ───────────────────────────────────────────────────────────────────
