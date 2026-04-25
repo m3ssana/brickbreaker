@@ -38,8 +38,8 @@ export class Arena {
     back.position.set(0, h / 2, -ARENA.halfDepth - t / 2);
     this.group.add(back);
 
-    // Glowing edge strips on top of side walls — feeds bloom
-    const edgeMat = new THREE.MeshBasicMaterial({ color: PALETTE.wallEdge });
+    // Glowing edge strips on top of side walls — bright enough for bloom, not blow-out
+    const edgeMat = new THREE.MeshBasicMaterial({ color: 0x8a1d6f });
     const edgeGeom = new THREE.BoxGeometry(0.06, 0.06, ARENA.depth);
     const edgeL = new THREE.Mesh(edgeGeom, edgeMat);
     edgeL.position.set(-ARENA.halfWidth - 0.02, h, 0);
@@ -56,9 +56,9 @@ export class Arena {
 
     // Glowing baseline at the kill plane (tells player where the floor is)
     const baselineMat = new THREE.MeshBasicMaterial({
-      color: 0xff3ad6,
+      color: 0x9c2580,
       transparent: true,
-      opacity: 0.55
+      opacity: 0.6
     });
     const baselineGeom = new THREE.BoxGeometry(ARENA.width, 0.03, 0.04);
     this.baseline = new THREE.Mesh(baselineGeom, baselineMat);

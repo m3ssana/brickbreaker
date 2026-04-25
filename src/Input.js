@@ -1,13 +1,17 @@
 import * as THREE from 'three';
 import { ARENA, PADDLE } from './Constants.js';
 
+const KEYBOARD_PADDLE_SPEED = 14; // world units per second
+
 /**
- * Touch / mouse input that maps screen coordinates to a paddle X target.
+ * Touch / mouse / keyboard input.
  *
- * The trick on mobile: when the user first touches anywhere on screen, do NOT
- * snap the paddle to that screen X (jarring). Instead, treat the first touch
- * as the anchor and apply *relative* drag from there. The game also accepts
- * "tap to launch" — a quick tap (no drag) launches the ball.
+ * Pointer: drag-anywhere relative paddle movement. A short tap with no
+ * meaningful drag is a launch. The drag threshold is large enough that a
+ * mouse click with a few pixels of jitter still registers as a tap.
+ *
+ * Keyboard: ArrowLeft/A and ArrowRight/D move the paddle. Space/Enter/ArrowUp
+ * launches the ball.
  */
 export class Input {
   constructor(canvas, camera, callbacks = {}) {
@@ -28,18 +32,35 @@ export class Input {
     this.dragMoved = false;
     this.currentPaddleX = 0;
 
+    this.keys = { left: false, right: false };
+
     canvas.addEventListener('pointerdown', this.#onDown, { passive: false });
     canvas.addEventListener('pointermove', this.#onMove, { passive: false });
     canvas.addEventListener('pointerup', this.#onUp, { passive: false });
     canvas.addEventListener('pointercancel', this.#onUp, { passive: false });
 
-    // prevent gestures
     canvas.addEventListener('gesturestart', e => e.preventDefault());
     canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+    window.addEventListener('keydown', this.#onKeyDown);
+    window.addEventListener('keyup', this.#onKeyUp);
   }
 
   setPaddleX(x) {
     this.currentPaddleX = x;
+  }
+
+  /**
+   * Apply continuous keyboard movement to the paddle target. Called once per
+   * frame from Game.update so it composes naturally with mouse drag (whichever
+   * input ran most recently wins).
+   */
+  tickKeyboard(dt) {
+    if (!this.keys.left && !this.keys.right) return;
+    const dir = (this.keys.right ? 1 : 0) - (this.keys.left ? 1 : 0);
+    if (dir === 0) return;
+    const target = this.currentPaddleX + dir * KEYBOARD_PADDLE_SPEED * dt;
+    this.onMove(target);
   }
 
   #screenToWorldX(clientX, clientY) {
@@ -72,9 +93,9 @@ export class Input {
     if (worldX === null) return;
 
     const dx = worldX - this.dragStartX;
-    if (Math.abs(dx) > 0.04) this.dragMoved = true;
+    // 0.25 world units ≈ ~30 px on a typical desktop view, ~18 px on a phone
+    if (Math.abs(dx) > 0.25) this.dragMoved = true;
 
-    // Relative drag: paddle moves by the same world-X offset as the finger.
     const target = this.dragStartPaddleX + dx;
     this.onMove(target);
   };
@@ -84,8 +105,32 @@ export class Input {
     this.canvas.releasePointerCapture?.(e.pointerId);
     if (!this.dragging) return;
     const elapsed = performance.now() - this.dragStartTime;
-    const wasTap = !this.dragMoved && elapsed < 350;
+    const wasTap = !this.dragMoved && elapsed < 400;
     this.dragging = false;
     if (wasTap) this.onLaunch();
+  };
+
+  #onKeyDown = (e) => {
+    // Don't capture keys when the user is typing in an input/textarea
+    const t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+
+    if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+      this.keys.left = true;
+      e.preventDefault();
+    } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+      this.keys.right = true;
+      e.preventDefault();
+    } else if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+      // ignore key repeat — only the initial press launches
+      if (e.repeat) return;
+      e.preventDefault();
+      this.onLaunch();
+    }
+  };
+
+  #onKeyUp = (e) => {
+    if (e.code === 'ArrowLeft' || e.code === 'KeyA') this.keys.left = false;
+    else if (e.code === 'ArrowRight' || e.code === 'KeyD') this.keys.right = false;
   };
 }

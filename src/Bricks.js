@@ -47,9 +47,9 @@ export class Bricks {
     const mat = new THREE.MeshStandardMaterial({
       color: color,
       emissive: color,
-      emissiveIntensity: hp >= 3 ? 0.9 : hp === 2 ? 0.6 : 0.45,
-      metalness: 0.2,
-      roughness: 0.4
+      emissiveIntensity: hp >= 3 ? 0.5 : hp === 2 ? 0.32 : 0.2,
+      metalness: 0.25,
+      roughness: 0.5
     });
     const mesh = new THREE.Mesh(geom, mat);
     mesh.position.set(x, BRICKS.height / 2 + 0.01, z);
@@ -105,7 +105,7 @@ export class Bricks {
       return { destroyed: true, scoreDelta: 100 + (brick.maxHp - 1) * 50 };
     }
     // Damaged but alive — dim it slightly and flash
-    brick.mesh.material.emissiveIntensity = 0.35;
+    brick.mesh.material.emissiveIntensity = 0.2;
     return { destroyed: false, scoreDelta: 25 };
   }
 
@@ -127,12 +127,12 @@ export class Bricks {
       // Hit flash recovery
       if (b.hitFlash) {
         const ft = (now - b.hitFlash) / 180;
+        const baseE = b.hp >= 3 ? 0.5 : b.hp === 2 ? 0.32 : 0.2;
         if (ft >= 1) {
           b.hitFlash = 0;
-          // restore base intensity according to remaining hp
-          b.mesh.material.emissiveIntensity = b.hp >= 3 ? 0.9 : b.hp === 2 ? 0.6 : 0.45;
+          b.mesh.material.emissiveIntensity = baseE;
         } else {
-          b.mesh.material.emissiveIntensity = 1.4 * (1 - ft) + (b.hp >= 2 ? 0.6 : 0.45) * ft;
+          b.mesh.material.emissiveIntensity = 0.85 * (1 - ft) + baseE * ft;
         }
       }
 

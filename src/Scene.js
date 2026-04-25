@@ -17,7 +17,7 @@ export class Scene {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.05;
+    this.renderer.toneMappingExposure = 0.95;
     this.renderer.setClearColor(PALETTE.bg, 1);
     container.appendChild(this.renderer.domElement);
 
@@ -39,23 +39,23 @@ export class Scene {
   }
 
   #buildLights() {
-    const ambient = new THREE.AmbientLight(0x6a7bff, 0.45);
+    const ambient = new THREE.AmbientLight(0x6a7bff, 0.55);
     this.scene.add(ambient);
 
-    const key = new THREE.DirectionalLight(0xffe9ff, 0.9);
+    const key = new THREE.DirectionalLight(0xffe9ff, 0.85);
     key.position.set(6, 14, 8);
     this.scene.add(key);
 
-    const rim = new THREE.DirectionalLight(0x20e3ff, 0.55);
+    const rim = new THREE.DirectionalLight(0x20e3ff, 0.45);
     rim.position.set(-6, 8, -10);
     this.scene.add(rim);
 
-    // colored point lights to feed bloom
-    const p1 = new THREE.PointLight(0xff3ad6, 1.3, 28, 1.6);
+    // colored point lights to add atmosphere — kept gentle so they don't blow out bloom
+    const p1 = new THREE.PointLight(0xff3ad6, 0.55, 24, 1.6);
     p1.position.set(-5, 4, -6);
     this.scene.add(p1);
 
-    const p2 = new THREE.PointLight(0x20e3ff, 1.0, 28, 1.6);
+    const p2 = new THREE.PointLight(0x20e3ff, 0.5, 24, 1.6);
     p2.position.set(5, 3, 6);
     this.scene.add(p2);
   }
@@ -122,7 +122,9 @@ export class Scene {
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
 
-    this.bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.85, 0.55, 0.18);
+    // UnrealBloomPass(resolution, strength, radius, threshold)
+    // Tuned so only the brightest highlights bloom — bricks/paddle stay readable.
+    this.bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.32, 0.5, 0.78);
     this.composer.addPass(this.bloom);
 
     this.composer.addPass(new OutputPass());

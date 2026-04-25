@@ -9,27 +9,28 @@ export class Ball {
     const mat = new THREE.MeshStandardMaterial({
       color: PALETTE.ball,
       emissive: PALETTE.ballEmissive,
-      emissiveIntensity: 1.6,
+      emissiveIntensity: 0.7,
       metalness: 0.1,
       roughness: 0.4
     });
     this.mesh = new THREE.Mesh(geom, mat);
     scene.add(this.mesh);
 
-    // Halo sprite for extra glow
+    // Halo sprite for extra glow — small and warm
     const haloMat = new THREE.SpriteMaterial({
       map: this.#makeHaloTexture(),
-      color: 0xffd060,
+      color: 0xff9030,
       transparent: true,
       depthWrite: false,
-      blending: THREE.AdditiveBlending
+      blending: THREE.AdditiveBlending,
+      opacity: 0.55
     });
     this.halo = new THREE.Sprite(haloMat);
-    this.halo.scale.set(1.4, 1.4, 1);
+    this.halo.scale.set(0.9, 0.9, 1);
     scene.add(this.halo);
 
     // Soft point light traveling with the ball
-    this.light = new THREE.PointLight(0xffc060, 1.0, 8, 1.6);
+    this.light = new THREE.PointLight(0xffc060, 0.45, 6, 1.6);
     scene.add(this.light);
 
     this.position = new THREE.Vector3(0, BALL.radius + 0.05, PADDLE.z - 0.7);

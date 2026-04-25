@@ -9,27 +9,27 @@ export class Paddle {
     const mat = new THREE.MeshStandardMaterial({
       color: PALETTE.paddle,
       metalness: 0.3,
-      roughness: 0.25,
+      roughness: 0.3,
       emissive: PALETTE.paddleEmissive,
-      emissiveIntensity: 0.9
+      emissiveIntensity: 0.35
     });
     this.mesh = new THREE.Mesh(geom, mat);
     this.mesh.position.set(0, PADDLE.height / 2, PADDLE.z);
     scene.add(this.mesh);
 
-    // Glowing strip along the paddle's leading edge
-    const stripGeom = new THREE.BoxGeometry(PADDLE.width - 0.1, 0.08, 0.08);
-    const stripMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    // Glowing strip along the paddle's leading edge — bright enough to bloom, not blow out
+    const stripGeom = new THREE.BoxGeometry(PADDLE.width - 0.1, 0.06, 0.06);
+    const stripMat = new THREE.MeshBasicMaterial({ color: 0xc8f0ff });
     this.strip = new THREE.Mesh(stripGeom, stripMat);
-    this.strip.position.set(0, PADDLE.height + 0.04, PADDLE.z - PADDLE.depth / 2 - 0.02);
+    this.strip.position.set(0, PADDLE.height + 0.03, PADDLE.z - PADDLE.depth / 2 - 0.02);
     scene.add(this.strip);
 
-    // Underglow — a flat colored quad casting bloom downward
-    const glowGeom = new THREE.PlaneGeometry(PADDLE.width * 1.6, PADDLE.depth * 4);
+    // Underglow — soft floor wash. Kept subtle so it doesn't dominate bloom.
+    const glowGeom = new THREE.PlaneGeometry(PADDLE.width * 1.4, PADDLE.depth * 3);
     const glowMat = new THREE.MeshBasicMaterial({
       color: PALETTE.paddle,
       transparent: true,
-      opacity: 0.18,
+      opacity: 0.09,
       depthWrite: false
     });
     this.glow = new THREE.Mesh(glowGeom, glowMat);

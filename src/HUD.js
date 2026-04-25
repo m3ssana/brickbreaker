@@ -41,7 +41,7 @@ export class HUD {
       ${body ? `<p>${body}</p>` : ''}
       ${stat}
       <button class="btn" id="start-btn">${button}</button>
-      <div class="hint">Drag to move • Tap to launch</div>
+      <div class="hint">Drag or ← → to move • Tap or Space to launch</div>
     `;
     this.overlayEl.classList.remove('hidden');
     this.startBtn = document.getElementById('start-btn');

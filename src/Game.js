@@ -124,6 +124,7 @@ export class Game {
 
   _update(dt) {
     this.input.setPaddleX(this.paddle.x);
+    this.input.tickKeyboard(dt);
     this.paddle.update(dt);
     this.arena.update(dt);
     this.bricks.update(dt);
