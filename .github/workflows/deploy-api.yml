@@ -27,14 +27,10 @@ jobs:
         run: npm ci
         working-directory: azure
 
-      - name: Azure login
-        uses: azure/login@v2
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
       - name: Deploy to Function App
         uses: azure/functions-action@v1
         with:
-          app-name: ${{ vars.FUNCTION_APP_NAME }}
+          app-name: func-brickbreaker-7vm2njc4
           package: azure
+          publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
           respect-funcignore: true

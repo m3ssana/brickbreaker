@@ -1,11 +1,6 @@
 name: Deploy Infrastructure (Bicep)
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'infra/**'
-      - '.github/workflows/deploy-infra.yml'
   workflow_dispatch:
     inputs:
       what_if:
@@ -39,7 +34,7 @@ jobs:
             --parameters infra/main.parameters.json
 
       - name: Deploy
-        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && !inputs.what_if) }}
+        if: ${{ !inputs.what_if }}
         run: |
           az deployment group create \
             --resource-group rg-brickbreaker \
@@ -49,7 +44,7 @@ jobs:
             --mode Incremental
 
       - name: Show outputs
-        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && !inputs.what_if) }}
+        if: ${{ !inputs.what_if }}
         run: |
           OUTPUTS=$(az deployment group show \
             --resource-group rg-brickbreaker \
