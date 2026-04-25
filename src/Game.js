@@ -50,6 +50,7 @@ export class Game {
 
     this.input = new Input(this.scene3d.renderer.domElement, this.scene3d.camera, {
       onMove: (x) => this.paddle.setTargetX(x),
+      onMoveImmediate: (x) => this.paddle.setX(x),
       onLaunch: () => this.handleLaunch()
     });
 
