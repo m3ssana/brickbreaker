@@ -1,67 +1,278 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BRICK ROASTER 3D</title>
-  <script>
-    // On GitHub Pages, COOP/COEP headers can't be set server-side.
-    // Register a service worker that re-injects them so SharedArrayBuffer works.
-    // In dev/preview, Vite sets the headers directly so SharedArrayBuffer is
-    // already defined — the block below is skipped entirely in those contexts.
-    if (typeof SharedArrayBuffer === 'undefined' && 'serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./coi-serviceworker.js').then(() => {
-        location.reload();
-      });
-    }
-  </script>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { width: 100%; height: 100%; background: #000008; overflow: hidden; }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#05060d" />
+    <title>NEON BREAK</title>
+    <style>
+      :root {
+        --ink: #e8eaff;
+        --accent: #ff3ad6;
+        --accent2: #20e3ff;
+      }
 
-    #canvas-container {
-      position: absolute;
-      inset: 0;
-    }
-    #canvas-container canvas { display: block; }
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+        background: #05060d;
+        color: var(--ink);
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", system-ui, sans-serif;
+        overflow: hidden;
+        overscroll-behavior: none;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none;
+      }
 
-    #hud {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      font-family: 'Courier New', Courier, monospace;
-      font-weight: bold;
-      user-select: none;
-    }
+      body {
+        touch-action: none;
+      }
 
-    #overlay {
-      position: absolute;
-      inset: 0;
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0, 0, 12, 0.88);
-      font-family: 'Courier New', Courier, monospace;
-      text-align: center;
-      pointer-events: auto;
-    }
-    #overlay.visible { display: flex; }
+      #app {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh;
+      }
 
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0; }
-    }
-    @keyframes pulse {
-      0%, 100% { text-shadow: 0 0 10px currentColor; }
-      50% { text-shadow: 0 0 30px currentColor, 0 0 60px currentColor; }
-    }
-  </style>
-</head>
-<body>
-  <div id="canvas-container"></div>
-  <div id="hud"></div>
-  <div id="overlay"></div>
-  <script type="module" src="/src/main.ts"></script>
-</body>
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+      }
+
+      .hud {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        padding: max(env(safe-area-inset-top, 0px), 12px) max(env(safe-area-inset-right, 0px), 16px) 0 max(env(safe-area-inset-left, 0px), 16px);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        pointer-events: none;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.12em;
+        z-index: 5;
+      }
+
+      .hud-block {
+        background: rgba(8, 10, 22, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 12px;
+        padding: 8px 14px;
+        font-size: 13px;
+        line-height: 1.2;
+        text-transform: uppercase;
+      }
+
+      .hud-label {
+        font-size: 9px;
+        opacity: 0.55;
+        letter-spacing: 0.18em;
+        margin-bottom: 2px;
+      }
+
+      .hud-value {
+        font-weight: 600;
+        font-size: 16px;
+        color: var(--ink);
+      }
+
+      .hud-value.score {
+        color: var(--accent2);
+        text-shadow: 0 0 12px rgba(32, 227, 255, 0.6);
+      }
+
+      .hud-value.level {
+        color: var(--accent);
+        text-shadow: 0 0 12px rgba(255, 58, 214, 0.55);
+      }
+
+      .lives {
+        display: inline-flex;
+        gap: 5px;
+        margin-top: 2px;
+      }
+
+      .life-pip {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 10px rgba(255, 58, 214, 0.8);
+      }
+
+      .life-pip.spent {
+        background: rgba(255, 255, 255, 0.12);
+        box-shadow: none;
+      }
+
+      .overlay {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(circle at center, rgba(20, 8, 40, 0.55), rgba(5, 6, 13, 0.85));
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        z-index: 10;
+        text-align: center;
+        padding: 24px;
+        opacity: 1;
+        transition: opacity 0.35s ease;
+      }
+
+      .overlay.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .overlay h1 {
+        font-size: clamp(40px, 12vw, 78px);
+        font-weight: 800;
+        letter-spacing: 0.18em;
+        margin: 0 0 6px 0;
+        background: linear-gradient(180deg, #ffffff 0%, var(--accent) 60%, var(--accent2) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        text-shadow: 0 0 40px rgba(255, 58, 214, 0.4);
+      }
+
+      .overlay h2 {
+        font-size: clamp(26px, 8vw, 44px);
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        margin: 0 0 10px 0;
+      }
+
+      .overlay p {
+        margin: 0 0 22px 0;
+        opacity: 0.7;
+        max-width: 320px;
+        line-height: 1.5;
+        font-size: 14px;
+        letter-spacing: 0.06em;
+      }
+
+      .overlay .stat-row {
+        display: flex;
+        gap: 22px;
+        margin-bottom: 28px;
+      }
+
+      .overlay .stat-row .stat {
+        text-align: center;
+      }
+
+      .overlay .stat-label {
+        font-size: 10px;
+        letter-spacing: 0.18em;
+        opacity: 0.55;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+
+      .overlay .stat-value {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--accent2);
+        text-shadow: 0 0 12px rgba(32, 227, 255, 0.6);
+      }
+
+      .btn {
+        appearance: none;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: linear-gradient(180deg, rgba(255, 58, 214, 0.18), rgba(32, 227, 255, 0.18));
+        color: var(--ink);
+        padding: 14px 32px;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        border-radius: 999px;
+        cursor: pointer;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        box-shadow: 0 8px 30px rgba(255, 58, 214, 0.25), inset 0 0 20px rgba(32, 227, 255, 0.15);
+        transition: transform 0.12s ease, box-shadow 0.2s ease;
+      }
+
+      .btn:active {
+        transform: scale(0.96);
+      }
+
+      .hint {
+        margin-top: 18px;
+        font-size: 11px;
+        opacity: 0.5;
+        letter-spacing: 0.18em;
+      }
+
+      .toast {
+        position: fixed;
+        left: 50%;
+        top: 30%;
+        transform: translate(-50%, -50%) scale(0.9);
+        font-size: clamp(28px, 8vw, 44px);
+        font-weight: 800;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 6;
+        text-shadow: 0 0 30px rgba(255, 58, 214, 0.7);
+        transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.2, 1.2, 0.2, 1);
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <div class="hud">
+      <div class="hud-block">
+        <div class="hud-label">Score</div>
+        <div class="hud-value score" id="score">0</div>
+      </div>
+      <div class="hud-block">
+        <div class="hud-label">Level</div>
+        <div class="hud-value level" id="level">1</div>
+      </div>
+      <div class="hud-block">
+        <div class="hud-label">Lives</div>
+        <div class="lives" id="lives"></div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="overlay" id="overlay">
+      <h1>NEON BREAK</h1>
+      <p>Drag to move the paddle. Break every brick. Don't drop the ball.</p>
+      <button class="btn" id="start-btn">Tap to Play</button>
+      <div class="hint">Best on iPhone in Chrome</div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
 </html>
