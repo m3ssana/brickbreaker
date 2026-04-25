@@ -102,10 +102,6 @@ resource functionApp 'Microsoft.Web/sites@2023-12-01' = {
           value: 'node'
         }
         {
-          name: 'WEBSITE_RUN_FROM_PACKAGE'
-          value: '1'
-        }
-        {
           // Account name only — no key. The function uses DefaultAzureCredential
           // which resolves to the system-assigned managed identity at runtime
           // and to `az login` credentials during local development.
