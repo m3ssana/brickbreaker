@@ -36,6 +36,8 @@ export class Scene {
     this.handleResize();
     window.addEventListener('resize', () => this.handleResize());
     window.addEventListener('orientationchange', () => this.handleResize());
+    // iOS PWA: fires when safe-area insets change (e.g. orientation switch)
+    window.visualViewport?.addEventListener('resize', () => this.handleResize());
   }
 
   #buildLights() {

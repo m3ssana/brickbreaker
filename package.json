@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
-    "preview": "vite preview --host"
+    "preview": "vite preview --host",
+    "generate-icons": "node scripts/generate-icons.js"
   },
   "dependencies": {
     "three": "^0.162.0"
