@@ -1,11 +1,19 @@
 import { TableClient } from '@azure/data-tables';
+import { DefaultAzureCredential } from '@azure/identity';
 
-const connStr = process.env.STORAGE_CONN || process.env.AzureWebJobsStorage;
+const accountName = process.env.STORAGE_ACCOUNT_NAME;
 const tableName = process.env.SCORES_TABLE || 'scores';
 
+// DefaultAzureCredential resolves to:
+//   - System-assigned managed identity when running in Azure Functions
+//   - `az login` / VS Code / Azure CLI credentials during local development
+// No key or connection string needed.
 let _client;
 export function getClient() {
-  if (!_client) _client = TableClient.fromConnectionString(connStr, tableName);
+  if (!_client) {
+    const endpoint = `https://${accountName}.table.core.windows.net`;
+    _client = new TableClient(endpoint, tableName, new DefaultAzureCredential());
+  }
   return _client;
 }
 
@@ -27,13 +35,12 @@ export async function listScores() {
 
 /**
  * Insert a score and trim the table to the top N.
- * Returns the updated top-N list. Returns null if the score didn't qualify.
+ * Returns the updated top-N list, or null if the score didn't qualify.
  */
 export async function insertScore({ name, score, level }) {
   const client = getClient();
   const current = await listScores();
 
-  // Reject if there are already TOP_N scores and the new one won't make the cut
   if (current.length >= TOP_N && score <= current[current.length - 1].score) {
     return null;
   }
@@ -48,7 +55,6 @@ export async function insertScore({ name, score, level }) {
     createdAt: new Date().toISOString()
   });
 
-  // Fetch the updated list and trim excess beyond TOP_N
   const updated = await listScores();
   const excess = updated.slice(TOP_N);
   for (const e of excess) {

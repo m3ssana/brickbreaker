@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.40.2.10011",
-      "templateHash": "17666442564008669865"
+      "templateHash": "7315704813397951717"
     }
   },
   "parameters": {
@@ -30,7 +30,7 @@
         "http://localhost:5173"
       ],
       "metadata": {
-        "description": "Allowed CORS origin(s) for the Function App, comma-separated if multiple"
+        "description": "Allowed CORS origin(s) for the Function App"
       }
     }
   },
@@ -39,7 +39,8 @@
     "storageAccountName": "[format('st{0}{1}', replace(parameters('namePrefix'), '-', ''), variables('suffix'))]",
     "functionAppName": "[format('func-{0}-{1}', parameters('namePrefix'), variables('suffix'))]",
     "appServicePlanName": "[format('asp-{0}-{1}', parameters('namePrefix'), variables('suffix'))]",
-    "scoresTableName": "scores"
+    "scoresTableName": "scores",
+    "storageTableDataContributorRoleId": "0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3"
   },
   "resources": [
     {
@@ -93,6 +94,9 @@
       "name": "[variables('functionAppName')]",
       "location": "[parameters('location')]",
       "kind": "functionapp,linux",
+      "identity": {
+        "type": "SystemAssigned"
+      },
       "properties": {
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
         "httpsOnly": true,
@@ -121,8 +125,8 @@
               "value": "1"
             },
             {
-              "name": "STORAGE_CONN",
-              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix={2}', variables('storageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2023-05-01').keys[0].value, environment().suffixes.storage)]"
+              "name": "STORAGE_ACCOUNT_NAME",
+              "value": "[variables('storageAccountName')]"
             },
             {
               "name": "SCORES_TABLE",
@@ -133,6 +137,21 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "scope": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+      "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), variables('storageTableDataContributorRoleId'), resourceId('Microsoft.Web/sites', variables('functionAppName')))]",
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('storageTableDataContributorRoleId'))]",
+        "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2023-12-01', 'full').identity.principalId]",
+        "principalType": "ServicePrincipal"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
       ]
     }
