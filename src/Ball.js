@@ -107,15 +107,16 @@ export class Ball {
     this.velocity.z = nz * this.speed;
   }
 
-  update(dt) {
-    this.position.x += this.velocity.x * dt;
-    this.position.z += this.velocity.z * dt;
-    this.#sync();
-  }
-
-  #sync() {
+  // Physics.step is authoritative for in-flight motion: it integrates and
+  // resolves collisions on `position` directly. We only need to push that
+  // position out to the visuals once per frame.
+  syncMesh() {
     this.mesh.position.copy(this.position);
     this.halo.position.set(this.position.x, this.position.y + 0.02, this.position.z);
     this.light.position.set(this.position.x, this.position.y + 1.2, this.position.z);
+  }
+
+  #sync() {
+    this.syncMesh();
   }
 }

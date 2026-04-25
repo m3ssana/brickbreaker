@@ -134,6 +134,7 @@ export class Game {
       this.ball.followPaddle(this.paddle);
     } else if (this.state === STATE.PLAYING) {
       const result = Physics.step(this.ball, this.paddle, this.bricks, dt);
+      this.ball.syncMesh();
       this._processCollisions(result);
     } else {
       // IDLE / LEVEL_CLEAR / GAME_OVER / WON — let the ball idle on the paddle if attached
