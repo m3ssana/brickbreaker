@@ -8,8 +8,9 @@ import { Particles } from './Particles.js';
 import { HUD } from './HUD.js';
 import { Audio } from './Audio.js';
 import { Input } from './Input.js';
+import { Leaderboard } from './Leaderboard.js';
 import * as Physics from './Physics.js';
-import { BALL, BRICKS, PADDLE, SCORING, STARTING_LIVES } from './Constants.js';
+import { BALL, LEADERBOARD, SCORING, STARTING_LIVES } from './Constants.js';
 
 const STATE = {
   IDLE: 'idle',
@@ -30,7 +31,6 @@ export class Game {
     this.score = 0;
     this.lives = STARTING_LIVES;
     this.level = 1;
-    this.peakScore = 0;
 
     this._lastTime = 0;
     this._raf = 0;
@@ -46,6 +46,7 @@ export class Game {
     this.particles = new Particles(this.scene3d.scene);
     this.hud = new HUD();
     this.audio = new Audio();
+    this.leaderboard = new Leaderboard();
 
     this.input = new Input(this.scene3d.renderer.domElement, this.scene3d.camera, {
       onMove: (x) => this.paddle.setTargetX(x),
@@ -55,15 +56,33 @@ export class Game {
     this.hud.setScore(0);
     this.hud.setLevel(1);
     this.hud.setLives(STARTING_LIVES);
-    this.hud.bindStart(() => this.startGame());
+
+    // Warm the leaderboard cache then show it on the title screen
+    if (LEADERBOARD.apiBase) {
+      this.leaderboard.prefetch().then(scores => {
+        // Only update the title overlay if we're still in IDLE state
+        if (this.state === STATE.IDLE) this._showTitleOverlay(scores);
+      });
+    }
+    this._showTitleOverlay(this.leaderboard.getCached());
 
     document.addEventListener('visibilitychange', () => {
       this._paused = document.hidden;
-      if (!this._paused) this._lastTime = 0; // avoid huge dt on resume
+      if (!this._paused) this._lastTime = 0;
     });
 
     this._lastTime = performance.now();
     this._raf = requestAnimationFrame((t) => this._tick(t));
+  }
+
+  _showTitleOverlay(scores) {
+    this.hud.showOverlay({
+      title: 'NEON BREAK',
+      body: 'Drag or use ← → to move the paddle. Tap or press Space to launch.',
+      button: 'Tap to Play',
+      leaderboard: scores.length ? scores : null
+    });
+    this.hud.bindStart(() => this.startGame());
   }
 
   startGame() {
@@ -137,7 +156,6 @@ export class Game {
       this.ball.syncMesh();
       this._processCollisions(result);
     } else {
-      // IDLE / LEVEL_CLEAR / GAME_OVER / WON — let the ball idle on the paddle if attached
       if (this.ball.attached) this.ball.followPaddle(this.paddle);
     }
   }
@@ -146,7 +164,6 @@ export class Game {
     if (result.paddleHit) {
       this.audio.paddleHit();
       this.particles.paddleSpark(this.ball.position.x, 0.1, this.ball.position.z, 0xffffff);
-      // Slight speed-up over the course of a level — keeps tension growing
       this.ball.setSpeed(Math.min(BALL.maxSpeed, this.ball.speed + 0.08));
     }
     if (result.wallHits > 0) {
@@ -214,32 +231,88 @@ export class Game {
     }
   }
 
-  _handleGameOver() {
+  async _handleGameOver() {
     this.state = STATE.GAME_OVER;
-    this.hud.showOverlay({
-      title: 'Game Over',
-      body: 'The ball got away. Try again?',
-      button: 'Play Again',
-      stats: [
-        { label: 'Score', value: this.score },
-        { label: 'Level', value: this.level }
-      ]
-    });
-    this.hud.bindStart(() => this.startGame());
+    const cachedScores = this.leaderboard.getCached();
+    const qualifies = LEADERBOARD.apiBase && this.score > this.leaderboard.qualifyingScore();
+
+    if (qualifies) {
+      // Show name-entry overlay immediately; submit after player enters name
+      this.hud.showOverlay({
+        title: 'Game Over',
+        stats: [
+          { label: 'Score', value: this.score },
+          { label: 'Level', value: this.level }
+        ],
+        leaderboard: cachedScores.length ? cachedScores : null,
+        nameEntry: {
+          onSubmit: async (name) => {
+            const { scores } = await this.leaderboard.submit({ name, score: this.score, level: this.level });
+            this.hud.showOverlay({
+              title: 'Leaderboard',
+              leaderboard: scores,
+              button: 'Play Again'
+            });
+            this.hud.bindStart(() => this.startGame());
+          }
+        },
+        button: 'Submit Score'
+      });
+    } else {
+      // Score didn't qualify — just show the leaderboard and play-again
+      const scores = LEADERBOARD.apiBase ? await this.leaderboard.fetchTop() : cachedScores;
+      this.hud.showOverlay({
+        title: 'Game Over',
+        stats: [
+          { label: 'Score', value: this.score },
+          { label: 'Level', value: this.level }
+        ],
+        leaderboard: scores.length ? scores : null,
+        button: 'Play Again'
+      });
+      this.hud.bindStart(() => this.startGame());
+    }
   }
 
-  _handleVictory() {
+  async _handleVictory() {
     this.state = STATE.WON;
-    this.hud.showOverlay({
-      title: 'You Won',
-      body: 'Every brick shattered. Top run?',
-      button: 'Play Again',
-      stats: [
-        { label: 'Final Score', value: this.score },
-        { label: 'Levels', value: MAX_LEVEL }
-      ]
-    });
-    this.hud.bindStart(() => this.startGame());
+    const cachedScores = this.leaderboard.getCached();
+    const qualifies = LEADERBOARD.apiBase && this.score > this.leaderboard.qualifyingScore();
+
+    if (qualifies) {
+      this.hud.showOverlay({
+        title: 'You Won',
+        stats: [
+          { label: 'Final Score', value: this.score },
+          { label: 'Levels', value: MAX_LEVEL }
+        ],
+        leaderboard: cachedScores.length ? cachedScores : null,
+        nameEntry: {
+          onSubmit: async (name) => {
+            const { scores } = await this.leaderboard.submit({ name, score: this.score, level: this.level });
+            this.hud.showOverlay({
+              title: 'Leaderboard',
+              leaderboard: scores,
+              button: 'Play Again'
+            });
+            this.hud.bindStart(() => this.startGame());
+          }
+        },
+        button: 'Submit Score'
+      });
+    } else {
+      const scores = LEADERBOARD.apiBase ? await this.leaderboard.fetchTop() : cachedScores;
+      this.hud.showOverlay({
+        title: 'You Won',
+        stats: [
+          { label: 'Final Score', value: this.score },
+          { label: 'Levels', value: MAX_LEVEL }
+        ],
+        leaderboard: scores.length ? scores : null,
+        button: 'Play Again'
+      });
+      this.hud.bindStart(() => this.startGame());
+    }
   }
 
   _maybeHaptic(kind) {

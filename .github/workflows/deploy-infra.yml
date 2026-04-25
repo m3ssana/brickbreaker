@@ -1,0 +1,65 @@
+name: Deploy Infrastructure (Bicep)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'infra/**'
+      - '.github/workflows/deploy-infra.yml'
+  workflow_dispatch:
+    inputs:
+      what_if:
+        description: 'Run what-if only (no deploy)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Bicep compile validation
+        run: az bicep build --file infra/main.bicep
+
+      - name: What-if preview
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.what_if }}
+        run: |
+          az deployment group what-if \
+            --resource-group rg-brickbreaker \
+            --template-file infra/main.bicep \
+            --parameters infra/main.parameters.json
+
+      - name: Deploy
+        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && !inputs.what_if) }}
+        run: |
+          az deployment group create \
+            --resource-group rg-brickbreaker \
+            --template-file infra/main.bicep \
+            --parameters infra/main.parameters.json \
+            --name main \
+            --mode Incremental
+
+      - name: Show outputs
+        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && !inputs.what_if) }}
+        run: |
+          OUTPUTS=$(az deployment group show \
+            --resource-group rg-brickbreaker \
+            --name main \
+            --query properties.outputs \
+            -o json)
+          echo "## Bicep deployment outputs" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          echo "$OUTPUTS" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          HOSTNAME=$(echo "$OUTPUTS" | jq -r '.functionAppHostname.value')
+          echo "**Function App hostname**: \`$HOSTNAME\`" >> $GITHUB_STEP_SUMMARY
+          echo "Update \`src/Constants.js\` → \`LEADERBOARD.apiBase\` to: \`https://$HOSTNAME/api\`" >> $GITHUB_STEP_SUMMARY

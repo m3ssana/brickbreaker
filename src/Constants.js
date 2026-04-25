@@ -45,6 +45,12 @@ export const SCORING = {
 
 export const STARTING_LIVES = 3;
 
+export const LEADERBOARD = {
+  apiBase: 'https://func-brickbreaker-7vm2njc4.azurewebsites.net/api',
+  maxNameLen: 12,
+  topN: 5
+};
+
 // Color palette: synthwave neon
 export const PALETTE = {
   bg: 0x05060d,

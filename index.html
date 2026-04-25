@@ -244,6 +244,92 @@
         opacity: 1;
         transform: translate(-50%, -50%) scale(1);
       }
+
+      /* Leaderboard table inside overlays */
+      .lb {
+        width: 100%;
+        max-width: 300px;
+        margin: 10px auto 18px;
+        font-size: 13px;
+      }
+
+      .lb-title {
+        font-size: 9px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        opacity: 0.5;
+        text-align: center;
+        margin-bottom: 8px;
+      }
+
+      .lb-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 10px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.04);
+        margin-bottom: 4px;
+      }
+
+      .lb-rank {
+        width: 18px;
+        text-align: right;
+        opacity: 0.45;
+        font-size: 11px;
+        flex-shrink: 0;
+      }
+
+      .lb-name {
+        flex: 1;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .lb-score {
+        font-variant-numeric: tabular-nums;
+        color: var(--accent2);
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        flex-shrink: 0;
+      }
+
+      /* Name entry input */
+      .name-entry {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        max-width: 280px;
+        margin: 0 auto;
+      }
+
+      .name-input {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 12px;
+        color: var(--ink);
+        font: inherit;
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-align: center;
+        padding: 10px 16px;
+        outline: none;
+        box-sizing: border-box;
+      }
+
+      .name-input::placeholder { opacity: 0.35; }
+
+      .name-input:focus {
+        border-color: rgba(32, 227, 255, 0.5);
+        box-shadow: 0 0 12px rgba(32, 227, 255, 0.2);
+      }
     </style>
   </head>
   <body>
@@ -267,7 +353,7 @@
     <div class="toast" id="toast"></div>
 
     <div class="overlay" id="overlay">
-      <h1>NEON BREAK</h1>
+      <h2>NEON BREAK</h2>
       <p>Drag or use ← → to move the paddle. Tap or press Space to launch. Break every brick.</p>
       <button class="btn" id="start-btn">Tap to Play</button>
       <div class="hint">iPhone Chrome • Mouse + keyboard supported</div>
