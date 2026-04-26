@@ -53,6 +53,7 @@ export class HUD {
             <div class="lb-row">
               <span class="lb-rank">${i + 1}</span>
               <span class="lb-name">${this.#esc(e.name)}</span>
+              ${e.level != null ? `<span class="lb-level">Lv ${e.level}</span>` : ''}
               <span class="lb-score">${String(e.score).padStart(5, '0')}</span>
             </div>`).join('')}
         </div>`
